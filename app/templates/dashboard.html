@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admission Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+
+    <h1 class="text-center mb-4">Admission Dashboard</h1>
+
+    <!-- Overview Cards -->
+    <div class="row text-center mb-4">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>Total Intake</h5>
+                    <h3>{{ total_intake }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>Total Admitted</h5>
+                    <h3>{{ total_admitted }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>Remaining Seats</h5>
+                    <h3>{{ remaining_seats }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quota-wise Seats -->
+    <h5 class="mb-3">Quota-wise Seats</h5>
+
+    {% for program in quota_summary %}
+    <div class="card mb-3 shadow">
+        <div class="card-header">
+            <strong>{{ program.program }}</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Quota</th>
+                        <th>Filled</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in program.quotas %}
+                    <tr>
+                        <td>{{ q.quota_type }}</td>
+                        <td>{{ q.filled }}</td>
+                        <td>{{ q.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pending Section -->
+    <div class="row text-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>Pending Documents</h5>
+                    <h3>{{ pending_docs }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>Pending Fees</h5>
+                    <h3>{{ pending_fees }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
