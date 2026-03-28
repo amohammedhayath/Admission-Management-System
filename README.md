@@ -111,15 +111,11 @@ Schema is portable to PostgreSQL.
 
 ---
 
-# ✅ Fix 2: Add Project Structure (VERY IMPORTANT)
 
-👉 Add this section before Setup:
 
-```
 ## 📁 Project Structure
 
-```
-
+````
 app/
 ├── main.py
 ├── database.py
@@ -134,7 +130,6 @@ app/
 │   └── admission_service.py
 ├── templates/
 │   └── dashboard.html
-
 ````
 
 
