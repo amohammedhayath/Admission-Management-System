@@ -136,7 +136,7 @@ app/
 ## 🛠️ Setup Instructions
 
 ```bash
-git clone <your-repo-link>
+git clone https://github.com/amohammedhayath/Admission-Management-System
 cd admission-management-system
 
 python -m venv venv
