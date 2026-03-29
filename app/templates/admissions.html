@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4 text-center">Admission Officer Portal</h2>
+        
+        <!-- Progress Tracker -->
+        <div class="progress mb-4" style="height: 25px;">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 25%;">Step 1: Registration</div>
+        </div>
+
+        <!-- Dynamic Tracking Header (Hidden initially) -->
+        <div id="trackingHeader" class="alert alert-secondary text-center d-none shadow-sm">
+            <h5 class="mb-0">Processing Applicant: <span id="displayAppId" class="badge bg-dark fs-5 text-uppercase"></span></h5>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-4">
+
+                <!-- ========================================== -->
+                <!-- STEP 1: REGISTRATION                       -->
+                <!-- ========================================== -->
+                <div id="step1_registration">
+                    <h4 class="text-success mb-3 border-bottom pb-2">Step 1: Applicant Registration</h4>
+                    
+                    <div class="mb-4 text-center p-3 bg-light rounded border">
+                        <h6 class="fw-bold mb-3 text-secondary">Select Admission Flow</h6>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="flowType" id="flowGovt" value="govt" autocomplete="off" checked onchange="toggleFlow()">
+                            <label class="btn btn-outline-success fw-bold" for="flowGovt">Journey 2: Government</label>
+
+                            <input type="radio" class="btn-check" name="flowType" id="flowMgmt" value="mgmt" autocomplete="off" onchange="toggleFlow()">
+                            <label class="btn btn-outline-primary fw-bold" for="flowMgmt">Journey 3: Management</label>
+                        </div>
+                    </div>
+
+                    <form id="applicantForm" onsubmit="createApplicant(event)">
+                        <div class="row mb-3">
+                            <div class="col"><input type="text" id="a_name" class="form-control" placeholder="Full Name" required></div>
+                            <div class="col"><input type="email" id="a_email" class="form-control" placeholder="Email" required></div>
+                            <div class="col"><input type="text" id="a_phone" class="form-control" placeholder="Phone (10 digits)" required minlength="10"></div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <select id="a_category" class="form-select" required>
+                                    <option value="">Category</option><option value="GM">GM</option><option value="SC">SC</option><option value="ST">ST</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <select id="a_entry" class="form-select" required>
+                                    <option value="Regular">Regular Entry</option><option value="Lateral">Lateral Entry</option>
+                                </select>
+                            </div>
+                            <div class="col"><input type="number" id="a_marks" class="form-control" placeholder="Exam Marks" required min="0" max="100"></div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12 mb-3">
+                                <label class="small fw-bold">Select Program</label>
+                                <select id="a_prog_id" class="form-select border-primary" required><option value="">Loading Programs...</option></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold">Quota Type</label>
+                                <select id="a_quota" class="form-select" required>
+                                    <option value="KCET">KCET (Govt)</option><option value="COMEDK">COMEDK (Govt)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="allotment_div">
+                                <label class="small fw-bold text-success">Govt Allotment No.</label>
+                                <input type="text" id="a_allotment" class="form-control border-success" placeholder="e.g. K-1234" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold fs-5 mt-2">Register & Proceed <i class="bi bi-arrow-right"></i></button>
+                    </form>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- STEP 2: SEAT ALLOCATION                    -->
+                <!-- ========================================== -->
+                <div id="step2_allocation" class="d-none text-center py-4">
+                    <h4 class="text-primary mb-4 border-bottom pb-2">Step 2: Check & Lock Seat</h4>
+                    <p class="text-muted mb-4">The system will now check if there is an available seat in the requested quota. If successful, the seat will be locked for this applicant.</p>
+                    <button class="btn btn-primary btn-lg fw-bold w-75" onclick="allocateSeat()">Allocate & Lock Seat</button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- STEP 3: VERIFICATION & FEE                 -->
+                <!-- ========================================== -->
+                <div id="step3_verification" class="d-none text-center py-4">
+                    <h4 class="text-info mb-4 border-bottom pb-2">Step 3: Documents & Fees</h4>
+                    <p class="text-muted mb-4">Please verify the physical documents and collect the admission fee.</p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <button id="btnDocs" class="btn btn-outline-info w-100 fw-bold py-3" onclick="verifyDocs()">1. Mark Documents Verified</button>
+                        </div>
+                        <div class="col-6">
+                            <button id="btnFees" class="btn btn-outline-secondary w-100 fw-bold py-3" onclick="payFee()">2. Mark Fee as Paid</button>
+                        </div>
+                    </div>
+                    <button id="btnProceedStep4" class="btn btn-success w-100 fw-bold d-none" onclick="showStep(4)">Proceed to Final Confirmation <i class="bi bi-arrow-right"></i></button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- STEP 4: CONFIRMATION                       -->
+                <!-- ========================================== -->
+                <div id="step4_confirmation" class="d-none text-center py-4">
+                    <h4 class="text-warning mb-4 border-bottom pb-2">Step 4: Final Confirmation</h4>
+                    <p class="text-muted mb-4">All prerequisites are complete. Generate the official immutable Admission Number to finish the process.</p>
+                    <button id="btnConfirm" class="btn btn-warning btn-lg fw-bold w-75 shadow" onclick="confirmAdmission()">GENERATE ADMISSION NUMBER</button>
+                    
+                    <div id="finalSuccessMsg" class="alert alert-success mt-4 d-none shadow-sm">
+                        <h5>🎉 Admission Completely Finalized!</h5>
+                        <p class="mb-1">Official Admission Number:</p>
+                        <h3 id="finalAdNo" class="font-monospace fw-bold text-dark"></h3>
+                        <hr>
+                        <button class="btn btn-sm btn-outline-dark" onclick="window.location.reload()">Start New Admission</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- STATE MANAGEMENT ---
+    let currentAppId = null;     // The internal DB ID
+    let currentAdmId = null;     // The Admission DB ID
+    let customAppNumber = "";    // e.g., KCET-1
+    let docsDone = false;
+    let feesDone = false;
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        loadPrograms();
+        toggleFlow();
+    };
+
+    async function loadPrograms() {
+        const res = await fetch('/programs/');
+        const progs = await res.json();
+        const sel = document.getElementById('a_prog_id');
+        sel.innerHTML = '<option value="">-- Choose Program --</option>';
+        progs.forEach(p => {
+            const institutionName = p.department?.institution?.name || 'Unknown College';
+            const departmentName = p.department?.name || 'Unknown Dept';
+            sel.innerHTML += `<option value="${p.id}">${institutionName} | ${departmentName} - ${p.name} (${p.course_type}) - Intake: ${p.intake}</option>`;
+        });
+    }
+
+    function toggleFlow() {
+        const isGovt = document.getElementById('flowGovt').checked;
+        const qSel = document.getElementById('a_quota');
+        const aDiv = document.getElementById('allotment_div');
+        const aInp = document.getElementById('a_allotment');
+
+        if (isGovt) {
+            qSel.innerHTML = '<option value="KCET">KCET (Govt)</option><option value="COMEDK">COMEDK (Govt)</option>';
+            aDiv.style.display = 'block'; aInp.required = true;
+        } else {
+            qSel.innerHTML = '<option value="Management">Management</option>';
+            aDiv.style.display = 'none'; aInp.required = false; aInp.value = '';
+        }
+    }
+
+    // --- WIZARD NAVIGATION ---
+    function showStep(step) {
+        document.getElementById('step1_registration').classList.add('d-none');
+        document.getElementById('step2_allocation').classList.add('d-none');
+        document.getElementById('step3_verification').classList.add('d-none');
+        document.getElementById('step4_confirmation').classList.add('d-none');
+
+        document.getElementById(`step${step}_${step===1?'registration':step===2?'allocation':step===3?'verification':'confirmation'}`).classList.remove('d-none');
+        
+        const pb = document.getElementById('progressBar');
+        pb.style.width = `${step * 25}%`;
+        pb.innerText = `Step ${step} of 4`;
+    }
+
+    // --- ERROR HANDLER ---
+    async function handleApiError(res) {
+        const data = await res.json();
+        alert("Action Blocked:\n" + (data.detail || "Unknown Error"));
+    }
+
+    // --- API CALLS ---
+    
+    // STEP 1
+    async function createApplicant(e) {
+        e.preventDefault();
+        const quotaType = document.getElementById('a_quota').value;
+        const payload = {
+            name: document.getElementById('a_name').value,
+            email: document.getElementById('a_email').value,
+            phone: document.getElementById('a_phone').value,
+            category: document.getElementById('a_category').value,
+            entry_type: document.getElementById('a_entry').value,
+            marks: parseInt(document.getElementById('a_marks').value),
+            program_id: parseInt(document.getElementById('a_prog_id').value),
+            quota_type: quotaType,
+            allotment_number: document.getElementById('a_allotment').value || null
+        };
+
+        const res = await fetch('/applicants/', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            currentAppId = data.id;
+            
+            // Generate the Beautiful Custom ID! (e.g. KCET-1)
+            customAppNumber = `${quotaType.toUpperCase()}-${data.id}`;
+            
+            document.getElementById('trackingHeader').classList.remove('d-none');
+            document.getElementById('displayAppId').innerText = customAppNumber;
+            
+            showStep(2); // Move to Step 2
+        } else await handleApiError(res);
+    }
+
+    // STEP 2
+    async function allocateSeat() {
+        const res = await fetch(`/admissions/allocate/${currentAppId}`, { method: 'POST' });
+        if (res.ok) {
+            const data = await res.json();
+            currentAdmId = data.id;
+            showStep(3); // Move to Step 3
+        } else await handleApiError(res);
+    }
+
+    // STEP 3
+    async function verifyDocs() {
+        const res = await fetch(`/applicants/${currentAppId}/documents`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({document_status: "Verified"})
+        });
+        if (res.ok) {
+            const btn = document.getElementById('btnDocs');
+            btn.classList.replace('btn-outline-info', 'btn-info');
+            btn.innerHTML = '✅ Documents Verified';
+            btn.disabled = true;
+            docsDone = true;
+            checkStep3Completion();
+        } else await handleApiError(res);
+    }
+
+    async function payFee() {
+        const res = await fetch(`/admissions/${currentAdmId}/fee`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({fee_status: "Paid"})
+        });
+        if (res.ok) {
+            const btn = document.getElementById('btnFees');
+            btn.classList.replace('btn-outline-secondary', 'btn-secondary');
+            btn.innerHTML = '✅ Fee Paid';
+            btn.disabled = true;
+            feesDone = true;
+            checkStep3Completion();
+        } else await handleApiError(res);
+    }
+
+    function checkStep3Completion() {
+        if (docsDone && feesDone) document.getElementById('btnProceedStep4').classList.remove('d-none');
+    }
+
+    // STEP 4
+    async function confirmAdmission() {
+        const res = await fetch(`/admissions/${currentAdmId}/confirm`, { method: 'POST' });
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('btnConfirm').classList.add('d-none');
+            document.getElementById('finalSuccessMsg').classList.remove('d-none');
+            document.getElementById('finalAdNo').innerText = data.admission_number;
+            document.getElementById('progressBar').classList.replace('bg-success', 'bg-dark');
+            document.getElementById('progressBar').innerText = "Process Complete";
+        } else await handleApiError(res);
+    }
+</script>
+{% endblock %}

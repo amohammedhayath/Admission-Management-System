@@ -1,95 +1,205 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admission Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+{% extends "base.html" %}
 
-<div class="container mt-4">
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info shadow-sm border-0 border-start border-info border-5">
+            <h4 class="alert-heading fw-bold mb-1">👋 Welcome, {{ current_user.display_name }}</h4>
+            <p class="mb-0">This is your real-time{% if current_user.role == 'viewer' %}, <strong>view-only</strong>{% endif %} command center. Monitor seat allocations{% if current_user.role != 'viewer' %}, pending actions{% endif %}, and track individual candidate progress below.</p>
+        </div>
 
-    <h1 class="text-center mb-4">Admission Dashboard</h1>
+        <!-- Institution Filter -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="fw-bold text-secondary small">Filter by Institution</label>
+                <select id="institution-filter" class="form-select" onchange="onInstitutionChange()">
+                    <option value="">All Institutions</option>
+                </select>
+            </div>
+        </div>
+
+        <h3 class="mb-3 text-secondary">Overview Statistics</h3>
+    </div>
 
     <!-- Overview Cards -->
-    <div class="row text-center mb-4">
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h5>Total Intake</h5>
-                    <h3>{{ total_intake }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h5>Total Admitted</h5>
-                    <h3>{{ total_admitted }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h5>Remaining Seats</h5>
-                    <h3>{{ remaining_seats }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quota-wise Seats -->
-    <h5 class="mb-3">Quota-wise Seats</h5>
-
-    {% for program in quota_summary %}
-    <div class="card mb-3 shadow">
-        <div class="card-header">
-            <strong>{{ program.program }}</strong>
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Quota</th>
-                        <th>Filled</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for q in program.quotas %}
-                    <tr>
-                        <td>{{ q.quota_type }}</td>
-                        <td>{{ q.filled }}</td>
-                        <td>{{ q.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endfor %}
-
-    <!-- Pending Section -->
-    <div class="row text-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h5>Pending Documents</h5>
-                    <h3>{{ pending_docs }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h5>Pending Fees</h5>
-                    <h3>{{ pending_fees }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <div class="col-md-3"><div class="card text-white bg-primary mb-3 shadow-sm"><div class="card-body"><h6 class="card-title text-uppercase text-white-50 fw-bold">Total Intake</h6><h2 id="total-intake" class="display-5 fw-bold mb-0">--</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-info mb-3 shadow-sm"><div class="card-body"><h6 class="card-title text-uppercase text-white-50 fw-bold">Seats Allocated</h6><h2 id="total-allocated" class="display-5 fw-bold mb-0">--</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-success mb-3 shadow-sm"><div class="card-body"><h6 class="card-title text-uppercase text-white-50 fw-bold">Confirmed</h6><h2 id="total-confirmed" class="display-5 fw-bold mb-0">--</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-white bg-warning mb-3 shadow-sm"><div class="card-body text-dark"><h6 class="card-title text-uppercase text-dark-50 fw-bold">Remaining Seats</h6><h2 id="remaining-seats" class="display-5 fw-bold mb-0">--</h2></div></div></div>
 </div>
 
-</body>
-</html>
+<div class="row">
+    <!-- Quota Stats Table -->
+    <div class="col-md-{% if current_user.role == 'viewer' %}12{% else %}6{% endif %} mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-header bg-white fw-bold border-bottom d-flex justify-content-between align-items-center">
+                <span>Quota-wise Seat Status</span>
+                <span id="institution-filter-label" class="badge bg-secondary d-none">Institution: All</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr id="quota-table-header">
+                            <th>Program</th><th>Quota</th><th>Total</th><th>Filled</th><th>Remaining</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quota-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.role != 'viewer' %}
+    <!-- Action Required Table -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-danger">
+            <div class="card-header bg-danger text-white fw-bold">Action Required (Pending Work for Officers)</div>
+            <div class="card-body">
+                <h6 class="fw-bold text-danger">Pending Documents</h6>
+                <ul id="pending-docs-list" class="text-muted small"></ul>
+                <h6 class="fw-bold text-danger mt-3">Pending Fees</h6>
+                <ul id="pending-fees-list" class="text-muted small"></ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Candidate Details Tracking Table -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">
+                Candidate Tracking & Admission Status
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr id="candidate-table-header">
+                                <th>App ID</th>
+                                <th>Candidate Name</th>
+                                <th>Program</th>
+                                <th>Quota</th>
+                                <th>Current Status</th>
+                                <th>Official Admission No.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidate-table-body">
+                            <!-- Filled dynamically by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedInstitutionId = null;
+
+    async function loadInstitutions() {
+        const res = await fetch('/dashboard/institutions');
+        const institutions = await res.json();
+        const sel = document.getElementById('institution-filter');
+        sel.innerHTML = '<option value="">All Institutions</option>';
+        institutions.forEach(i => sel.innerHTML += `<option value="${i.id}">${i.name} (${i.code})</option>`);
+    }
+
+    function onInstitutionChange() {
+        const val = document.getElementById('institution-filter').value;
+        selectedInstitutionId = val ? parseInt(val) : null;
+        loadDashboard();
+    }
+
+    async function loadDashboard() {
+        try {
+            const url = selectedInstitutionId ? `/dashboard/stats?institution_id=${selectedInstitutionId}` : '/dashboard/stats';
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // 1. Overview
+            document.getElementById('total-intake').innerText = data.overview.total_intake;
+            document.getElementById('total-allocated').innerText = data.overview.total_allocated;
+            document.getElementById('total-confirmed').innerText = data.overview.total_confirmed_admissions;
+            document.getElementById('remaining-seats').innerText = data.overview.remaining_seats;
+
+            // 2. Quotas
+            const qBody = document.getElementById('quota-table-body');
+            const qHeader = document.getElementById('quota-table-header');
+            const instLabel = document.getElementById('institution-filter-label');
+            const isAll = !selectedInstitutionId;
+
+            qHeader.innerHTML = isAll
+                ? '<th>Institution</th><th>Program</th><th>Quota</th><th>Total</th><th>Filled</th><th>Remaining</th>'
+                : '<th>Program</th><th>Quota</th><th>Total</th><th>Filled</th><th>Remaining</th>';
+
+            instLabel.classList.toggle('d-none', !isAll);
+            if (isAll) instLabel.textContent = 'Institution: All';
+
+            qBody.innerHTML = '';
+            if (data.quota_wise_status.length === 0) {
+                qBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No data for selected institution.</td></tr>';
+            } else {
+                data.quota_wise_status.forEach(stat => {
+                    qBody.innerHTML += `<tr>
+                        ${isAll ? `<td>${stat.institution}</td>` : ''}
+                        <td>${stat.program}</td>
+                        <td><span class="badge bg-secondary">${stat.quota_type}</span></td>
+                        <td>${stat.total_seats}</td><td>${stat.filled}</td>
+                        <td class="fw-bold ${stat.remaining === 0 ? 'text-danger' : 'text-success'}">${stat.remaining}</td>
+                    </tr>`;
+                });
+            }
+
+            // 3. Pending Actions (only for admin/officer)
+            {% if current_user.role != 'viewer' %}
+            const dList = document.getElementById('pending-docs-list');
+            dList.innerHTML = data.pending_documents.length ? '' : '<li>All documents verified!</li>';
+            data.pending_documents.forEach(doc => dList.innerHTML += `<li>${doc.name} (${doc.program})</li>`);
+
+            const fList = document.getElementById('pending-fees-list');
+            fList.innerHTML = data.pending_fees.length ? '' : '<li>All fees paid!</li>';
+            data.pending_fees.forEach(fee => fList.innerHTML += `<li>${fee.applicant_name} (${fee.program}) - Adm ID: ${fee.admission_id}</li>`);
+            {% endif %}
+
+            // 4. Candidate Tracking Table
+            const cBody = document.getElementById('candidate-table-body');
+            const cHeader = document.getElementById('candidate-table-header');
+            cHeader.innerHTML = isAll
+                ? '<th>App ID</th><th>Candidate Name</th><th>Institution</th><th>Program</th><th>Quota</th><th>Current Status</th><th>Official Admission No.</th>'
+                : '<th>App ID</th><th>Candidate Name</th><th>Program</th><th>Quota</th><th>Current Status</th><th>Official Admission No.</th>';
+
+            cBody.innerHTML = '';
+            if (data.candidates.length === 0) {
+                cBody.innerHTML = `<tr><td colspan="${isAll ? 7 : 6}" class="text-center text-muted py-3">No candidates registered yet.</td></tr>`;
+            } else {
+                data.candidates.forEach(app => {
+                    let badgeClass = 'bg-secondary';
+                    if (app.status === 'Seat Allocated') badgeClass = 'bg-warning text-dark';
+                    if (app.status === 'Confirmed') badgeClass = 'bg-success';
+
+                    cBody.innerHTML += `<tr>
+                        <td class="fw-bold text-dark bg-light text-center border-end border-2">${app.quota.toUpperCase()}-${app.id}</td>
+                        <td class="fw-bold">${app.name}</td>
+                        ${isAll ? `<td>${app.institution}</td>` : ''}
+                        <td>${app.program}</td>
+                        <td><span class="badge border border-secondary text-secondary">${app.quota}</span></td>
+                        <td><span class="badge ${badgeClass}">${app.status}</span></td>
+                        <td><span class="font-monospace text-muted">${app.admission_number}</span></td>
+                    </tr>`;
+                });
+            }
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
+    window.onload = async () => {
+        await loadInstitutions();
+        loadDashboard();
+    };
+</script>
+{% endblock %}

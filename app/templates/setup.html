@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h2 class="mb-4 text-center">Administrator Portal</h2>
+
+        <!-- Progress Tracker -->
+        <div class="progress mb-4" style="height: 25px;">
+            <div id="setupProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 50%;">Step 1: Institution</div>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-4">
+
+                <!-- ========================================== -->
+                <!-- STEP 1: INSTITUTION                        -->
+                <!-- ========================================== -->
+                <div id="step1_institution">
+                    <h4 class="text-primary mb-3 border-bottom pb-2">Step 1: Create Institution</h4>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="fw-bold text-primary mb-3">Select or Create Institution</h6>
+                                <select id="sel_step1_inst" class="form-select mb-2" onchange="onStep1InstChange()">
+                                    <option value="">Loading...</option>
+                                </select>
+                                <form onsubmit="createInst(event)">
+                                    <div class="input-group">
+                                        <input type="text" id="inst_name" class="form-control" placeholder="New Institution Name" required>
+                                        <input type="text" id="inst_code" class="form-control" placeholder="Code" required>
+                                        <button class="btn btn-primary" type="submit">Add New</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-3" id="instCheckAlert" style="display:none;">
+                        <strong>⚠️</strong> Please select or create an Institution before proceeding.
+                    </div>
+                    <button class="btn btn-primary w-100 fw-bold" onclick="validateAndProceed()">Proceed to Programs <i class="bi bi-arrow-right"></i></button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- STEP 2: PROGRAM & QUOTAS                   -->
+                <!-- ========================================== -->
+                <div id="step2_academic" class="d-none">
+                    <h4 class="text-success mb-3 border-bottom pb-2">Step 2: Create Programs & Quotas</h4>
+
+                    <!-- Department creation inline -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <h6 class="fw-bold text-success mb-3">A. Create Department</h6>
+                                <select id="sel_inst" class="form-select mb-2"><option value="">Select Institution...</option></select>
+                                <form onsubmit="createDept(event)" class="input-group">
+                                    <input type="text" id="dept_name" class="form-control" placeholder="Department Name (e.g., Engineering)" required>
+                                    <button class="btn btn-success" type="submit">Add</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Form -->
+                    <div class="p-4 bg-white rounded border border-primary">
+                        <h6 class="fw-bold text-primary mb-3">B. Publish Program</h6>
+                        <form onsubmit="createProgram(event)">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-primary">Institution</label>
+                                    <select id="prog_inst" class="form-select" required onchange="loadDepartments()"><option value="">Loading...</option></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-success">Department</label>
+                                    <select id="sel_dept" class="form-select" required><option value="">Loading...</option></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-info">Academic Year</label>
+                                    <div id="ay_display" class="form-control border-info fw-bold text-info">Loading...</div>
+                                    <input type="hidden" id="sel_ay" value="">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-dark">Program Name</label>
+                                    <input type="text" id="prog_name" class="form-control" placeholder="e.g., CSE" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-dark">Course Type</label>
+                                    <select id="prog_type" class="form-select" required>
+                                        <option value="UG">UG</option><option value="PG">PG</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-danger">Total Intake</label>
+                                    <input type="number" id="prog_intake" class="form-control border-danger" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small fw-bold text-danger">Quotas (Must equal Total Intake)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white">KCET</span>
+                                        <input type="number" id="q_kcet" class="form-control" value="0">
+                                        <span class="input-group-text bg-success text-white">COMEDK</span>
+                                        <input type="number" id="q_comedk" class="form-control" value="0">
+                                        <span class="input-group-text bg-info text-white">Mgmt</span>
+                                        <input type="number" id="q_mgmt" class="form-control" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100 fw-bold fs-5">Publish Program & Quotas</button>
+                        </form>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <button class="btn btn-outline-secondary w-100 fw-bold" onclick="showStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-success w-100 fw-bold" onclick="showStep(1)">Start Over <i class="bi bi-arrow-clockwise"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- STATE MANAGEMENT ---
+    let currentStep = 1;
+    let selectedInstId = null;
+    let selectedDeptId = null;
+
+    // --- STEP NAVIGATION ---
+    function showStep(step) {
+        document.getElementById('step1_institution').classList.add('d-none');
+        document.getElementById('step2_academic').classList.add('d-none');
+        document.getElementById(`step${step}_${step===1?'institution':'academic'}`).classList.remove('d-none');
+        currentStep = step;
+        updateProgress();
+        if (step === 2) loadDropdowns();
+    }
+
+    function validateAndProceed() {
+        const instId = document.getElementById('sel_step1_inst').value;
+        if (!instId) {
+            document.getElementById('instCheckAlert').style.display = 'block';
+            alert('⚠️ Please select or create an Institution before proceeding!');
+            return;
+        }
+        selectedInstId = parseInt(instId);
+        document.getElementById('instCheckAlert').style.display = 'none';
+        showStep(2);
+    }
+
+    function onStep1InstChange() {
+        const val = document.getElementById('sel_step1_inst').value;
+        if (val) {
+            selectedInstId = parseInt(val);
+            document.getElementById('instCheckAlert').style.display = 'none';
+        }
+    }
+
+    function updateProgress() {
+        const pb = document.getElementById('setupProgress');
+        const texts = ['Step 1: Institution', 'Step 2: Programs & Quotas'];
+        const widths = ['50%', '100%'];
+        pb.style.width = widths[currentStep - 1];
+        pb.innerText = texts[currentStep - 1];
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        loadDropdowns();
+        showStep(1);
+    };
+
+    // --- LOAD DROPDOWNS ---
+    async function loadDropdowns() {
+        const insts = await (await fetch('/setup/institutions')).json();
+
+        // Step 1: Institution dropdown
+        const selStep1Inst = document.getElementById('sel_step1_inst');
+        selStep1Inst.innerHTML = insts.length ? '<option value="">-- Select Existing --</option>' : '<option value="">No institutions yet...</option>';
+        insts.forEach(i => selStep1Inst.innerHTML += `<option value="${i.id}">${i.name} (${i.code})</option>`);
+        if (insts.length === 1) {
+            selStep1Inst.value = insts[0].id;
+            selectedInstId = insts[0].id;
+        }
+
+        // Step 2: Dept section — institution dropdown
+        const selInst = document.getElementById('sel_inst');
+        selInst.innerHTML = insts.length ? '<option value="">Select Institution...</option>' : '<option value="">No institutions yet...</option>';
+        insts.forEach(i => selInst.innerHTML += `<option value="${i.id}">${i.name} (${i.code})</option>`);
+
+        // Program form: Institution
+        const progInst = document.getElementById('prog_inst');
+        progInst.innerHTML = insts.length ? '<option value="">Select Institution...</option>' : '<option value="">No institutions yet...</option>';
+        insts.forEach(i => progInst.innerHTML += `<option value="${i.id}">${i.name} (${i.code})</option>`);
+
+        // Auto-select institution from Step 1
+        if (selectedInstId) {
+            selInst.value = selectedInstId;
+            progInst.value = selectedInstId;
+        }
+
+        // Program form: Department
+        await loadDepartments();
+
+        // Program form: Academic Year — pick latest existing year
+        const ays = await (await fetch('/setup/academic-years')).json();
+        const activeYear = ays.length ? ays[0] : null;
+        if (activeYear) {
+            document.getElementById('ay_display').innerText = activeYear.year;
+            document.getElementById('sel_ay').value = activeYear.id;
+        } else {
+            document.getElementById('ay_display').innerText = 'No academic year found';
+            document.getElementById('sel_ay').value = '';
+        }
+    }
+
+    async function loadDepartments() {
+        const instId = document.getElementById('prog_inst').value;
+        const selDept = document.getElementById('sel_dept');
+        if (!instId) {
+            selDept.innerHTML = '<option value="">Select institution first...</option>';
+            return;
+        }
+        const depts = await (await fetch('/setup/departments')).json();
+        const filtered = depts.filter(d => d.institution_id == instId);
+        selDept.innerHTML = filtered.length ? '<option value="">Select Department...</option>' : '<option value="">No departments for this institution...</option>';
+        filtered.forEach(d => selDept.innerHTML += `<option value="${d.id}">${d.name}</option>`);
+    }
+
+    // --- CREATE INSTITUTION ---
+    async function createInst(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating...';
+        btn.disabled = true;
+        try {
+            const response = await fetch('/setup/institution', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: document.getElementById('inst_name').value,
+                    code: document.getElementById('inst_code').value
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                selectedInstId = data.id;
+                alert('✅ Institution created!');
+                document.getElementById('inst_name').value = '';
+                document.getElementById('inst_code').value = '';
+                loadDropdowns().then(() => {
+                    document.getElementById('sel_step1_inst').value = data.id;
+                });
+            } else {
+                const err = await response.json();
+                alert('❌ Error: ' + (err.detail || 'Failed'));
+            }
+        } catch (error) {
+            alert('❌ Network error: ' + error.message);
+        } finally {
+            btn.innerHTML = 'Add New';
+            btn.disabled = false;
+        }
+    }
+
+    // --- CREATE DEPARTMENT ---
+    async function createDept(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+        try {
+            const response = await fetch('/setup/department', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: document.getElementById('dept_name').value,
+                    institution_id: document.getElementById('sel_inst').value
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                selectedDeptId = data.id;
+                alert('✅ Department created!');
+                document.getElementById('dept_name').value = '';
+                loadDropdowns();
+            } else {
+                const err = await response.json();
+                alert('❌ Error: ' + (err.detail || 'Failed'));
+            }
+        } catch (error) {
+            alert('❌ Network error: ' + error.message);
+        } finally {
+            btn.innerHTML = 'Add';
+            btn.disabled = false;
+        }
+    }
+
+    // --- CREATE PROGRAM ---
+    async function createProgram(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Publishing...';
+        btn.disabled = true;
+
+        const instId = parseInt(document.getElementById('prog_inst').value);
+        const deptId = parseInt(document.getElementById('sel_dept').value);
+        const ayId = parseInt(document.getElementById('sel_ay').value);
+
+        if (!instId || Number.isNaN(instId)) {
+            alert('❌ Please select an institution.');
+            btn.innerHTML = 'Publish Program & Quotas';
+            btn.disabled = false;
+            return;
+        }
+        if (!deptId || Number.isNaN(deptId)) {
+            alert('❌ Please select a department.');
+            btn.innerHTML = 'Publish Program & Quotas';
+            btn.disabled = false;
+            return;
+        }
+        if (!ayId || Number.isNaN(ayId)) {
+            alert('❌ Academic year not found; please set up one first.');
+            btn.innerHTML = 'Publish Program & Quotas';
+            btn.disabled = false;
+            return;
+        }
+
+        const kcet = parseInt(document.getElementById('q_kcet').value) || 0;
+        const comedk = parseInt(document.getElementById('q_comedk').value) || 0;
+        const mgmt = parseInt(document.getElementById('q_mgmt').value) || 0;
+        const total = kcet + comedk + mgmt;
+        const intake = parseInt(document.getElementById('prog_intake').value);
+
+        if (total !== intake) {
+            alert(`❌ Quota total (${total}) must equal intake (${intake})`);
+            btn.innerHTML = 'Publish Program & Quotas';
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await fetch('/programs/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: document.getElementById('prog_name').value,
+                    course_type: document.getElementById('prog_type').value,
+                    intake: intake,
+                    department_id: deptId,
+                    academic_year_id: ayId,
+                    quotas: [
+                        { quota_type: 'KCET', total_seats: kcet },
+                        { quota_type: 'COMEDK', total_seats: comedk },
+                        { quota_type: 'Management', total_seats: mgmt }
+                    ]
+                })
+            });
+            if (response.ok) {
+                alert('🎉 Program & Quotas published!');
+                document.getElementById('prog_name').value = '';
+                document.getElementById('prog_intake').value = '';
+                document.getElementById('q_kcet').value = '0';
+                document.getElementById('q_comedk').value = '0';
+                document.getElementById('q_mgmt').value = '0';
+                loadDropdowns();
+            } else {
+                const err = await response.json();
+                alert('❌ Error: ' + (err.detail || 'Failed'));
+            }
+        } catch (error) {
+            alert('❌ Network error: ' + error.message);
+        } finally {
+            btn.innerHTML = 'Publish Program & Quotas';
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}
