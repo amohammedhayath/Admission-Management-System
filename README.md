@@ -155,12 +155,12 @@ app/
 │   └── setup.py
 ├── services/              # Business logic layer
 │   └── admission_service.py
-├── templates/             # UI templates
-│   ├── admissions.html
-│   ├── base.html
-│   ├── dashboard.html
-│   ├── login.html
-│   └── setup.html
+└── templates/             # UI templates
+    ├── admissions.html
+    ├── base.html
+    ├── dashboard.html
+    ├── login.html
+    └── setup.html
 ```
 
 ---
