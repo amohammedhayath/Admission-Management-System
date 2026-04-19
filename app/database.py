@@ -8,16 +8,17 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-# 🔥 Ensure DB URL exists
+# ✅ Don't crash — fallback for safety
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set")
+    print("⚠️ DATABASE_URL not found, using fallback SQLite")
+    DATABASE_URL = "sqlite:///./fallback.db"
 
-# 🔥 PostgreSQL engine (NO SQLite args)
+# ✅ PostgreSQL + SSL support
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"sslmode": "require"}
+    connect_args={"sslmode": "require"} if "postgresql" in DATABASE_URL else {}
 )
+
 
 # Session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
