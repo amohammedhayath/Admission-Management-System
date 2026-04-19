@@ -16,7 +16,12 @@ app = FastAPI(title="Admission Management System", version="1.0")
 app.add_middleware(SessionMiddleware, secret_key="dev-secret-key-change-in-production")
 
 # Create tables in database
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+    print("Database tables created successfully.")
+except Exception as e:
+    print(f"Error creating database tables: {e}")
+    raise
 
 # Include API routes
 app.include_router(setup.router)
