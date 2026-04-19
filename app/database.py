@@ -14,7 +14,10 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set")
 
 # 🔥 PostgreSQL engine (NO SQLite args)
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"sslmode": "require"}
+)
 
 # Session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
