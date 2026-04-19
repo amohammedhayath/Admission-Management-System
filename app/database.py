@@ -1,24 +1,28 @@
 ''' Required for database connection and session management. '''
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# SQLite database URL
-DATABASE_URL = "sqlite:///./admission.db"
+load_dotenv()
 
-#Create the SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-    )
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create a configured "Session" class
+# 🔥 Ensure DB URL exists
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
+
+# 🔥 PostgreSQL engine (NO SQLite args)
+engine = create_engine(DATABASE_URL)
+
+# Session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for our models
+# Base
 Base = declarative_base()
 
-# Dependency to get the database session
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
