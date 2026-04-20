@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: admission-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: admission_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: admission-app
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/admission_db
+    command: >
+      gunicorn -w 1 -k uvicorn.workers.UvicornWorker
+      app.main:app --bind 0.0.0.0:8000 --timeout 180
+
+volumes:
+  postgres_data:

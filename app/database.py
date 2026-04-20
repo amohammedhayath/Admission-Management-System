@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-print(f"DEBUG: DATABASE_URL = {repr(DATABASE_URL)}")
+# print(f"DEBUG: DATABASE_URL = {repr(DATABASE_URL)}")
 # ✅ Don't crash — fallback for safety
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable not set. Please check your .env file.")
@@ -17,9 +17,8 @@ if not DATABASE_URL:
 # ✅ PostgreSQL + SSL support
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"sslmode": "require"} if "postgresql" in DATABASE_URL else {}
+    connect_args={}
 )
-
 
 # Session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
