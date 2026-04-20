@@ -15,9 +15,11 @@ if not DATABASE_URL:
 
 
 # ✅ PostgreSQL + SSL support
+use_ssl = os.getenv("USE_SSL", "false").lower() == "true"
+
 engine = create_engine(
     DATABASE_URL,
-    connect_args={}
+    connect_args={"sslmode": "require"} if use_ssl else {}
 )
 
 # Session
